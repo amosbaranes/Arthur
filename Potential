@@ -1,0 +1,172 @@
+# Redo the study using 3 years only
+import os
+import pandas as pd
+from openpyxl.utils.dataframe import dataframe_to_rows
+import csv
+import pickle
+from concurrent.futures import ThreadPoolExecutor as T
+from openpyxl import Workbook, load_workbook
+
+import xlrd
+from multiprocessing import Lock
+
+
+class ProcessData:
+    def __init__(self, files):
+        self.wd = os.getcwd()
+        self.data_dir = self.wd + '\\data\\Potential'
+        self.files = files
+
+    def main(self):
+        print('Process Started')
+        files = self.files.copy()
+        print('Start Process 1')
+        # Stage 1
+        with T(max_workers=6) as pool:
+            pool.map(self.process_files, self.files)
+        print('Process Done 1')
+
+    def process_files(self, f):
+        sr = self.data_dir + '\\' + f + '.xlsx'
+        print(sr)
+        w = load_workbook(filename=sr, read_only=False)
+        df = pd.read_excel(sr)
+
+        df['d1_min'] = abs(df['x0_min'] - df['x1_min'])
+        df['d2_min'] = abs(df['x0_min'] - df['x2_min'])
+        df['d3_min'] = abs(df['x0_min'] - df['x3_min'])
+        df['d4_min'] = abs(df['x0_min'] - df['x4_min'])
+        df['d5_min'] = abs(df['x0_min'] - df['x5_min'])
+        df['d6_min'] = abs(df['x0_min'] - df['x6_min'])
+
+        df['d1_max'] = abs(df['x0_max'] - df['x1_max'])
+        df['d2_max'] = abs(df['x0_max'] - df['x2_max'])
+        df['d3_max'] = abs(df['x0_max'] - df['x3_max'])
+        df['d4_max'] = abs(df['x0_max'] - df['x4_max'])
+        df['d5_max'] = abs(df['x0_max'] - df['x5_max'])
+        df['d6_max'] = abs(df['x0_max'] - df['x6_max'])
+
+        df['SComb_min'] = df.iloc[:, 15:21].min(axis=1)
+        df['SComb_max'] = df.iloc[:, 21:27].min(axis=1)
+
+        df['s1_min'] = df['d1_min'] - df['SComb_min']
+        df['s2_min'] = df['d2_min'] - df['SComb_min']
+        df['s3_min'] = df['d3_min'] - df['SComb_min']
+        df['s4_min'] = df['d4_min'] - df['SComb_min']
+        df['s5_min'] = df['d5_min'] - df['SComb_min']
+        df['s6_min'] = df['d6_min'] - df['SComb_min']
+
+        df['s1_max'] = df['d1_max'] - df['SComb_max']
+        df['s2_max'] = df['d2_max'] - df['SComb_max']
+        df['s3_max'] = df['d3_max'] - df['SComb_max']
+        df['s4_max'] = df['d4_max'] - df['SComb_max']
+        df['s5_max'] = df['d5_max'] - df['SComb_max']
+        df['s6_max'] = df['d6_max'] - df['SComb_max']
+
+        wspd = w.create_sheet("Processed_Data", 1)
+        for r in dataframe_to_rows(df, index=False, header=True):
+            wspd.append(r)
+
+        sig_min = [1 - df['d1_min'].mean(),
+                   1 - df['d2_min'].mean(),
+                   1 - df['d3_min'].mean(),
+                   1 - df['d4_min'].mean(),
+                   1 - df['d5_min'].mean(),
+                   1 - df['d6_min'].mean(),
+                   1 - df['SComb_min'].mean()]
+
+        sig_max = [1 - df['d1_max'].mean(),
+                   1 - df['d2_max'].mean(),
+                   1 - df['d3_max'].mean(),
+                   1 - df['d4_max'].mean(),
+                   1 - df['d5_max'].mean(),
+                   1 - df['d6_max'].mean(),
+                   1 - df['SComb_max'].mean()]
+
+
+        sc_min = [1-df['s1_min'].mean(),
+                  1-df['s2_min'].mean(),
+                  1-df['s3_min'].mean(),
+                  1-df['s4_min'].mean(),
+                  1-df['s5_min'].mean(),
+                  1-df['s6_min'].mean()
+                  ]
+
+        sc_max = [1-df['s1_max'].mean(),
+                  1-df['s2_max'].mean(),
+                  1-df['s3_max'].mean(),
+                  1-df['s4_max'].mean(),
+                  1-df['s5_max'].mean(),
+                  1-df['s6_max'].mean()
+                  ]
+
+        sc_min_r = [round(x, 5) for x in sc_min]
+        sc_max_r = [round(x, 5) for x in sc_max]
+        print('--')
+        c_min_r_sum = sum(sc_min_r) - 0.7*len(sc_min_r)
+        sum_min = round(c_min_r_sum,5)
+        c_min_r_s = [round((x - 0.7)/sum_min, 5) for x in sc_min_r]
+
+        c_max_r_sum = sum(sc_max_r) - 0.7*len(sc_max_r)
+        sum_max = round(c_max_r_sum,5)
+        c_max_r_s = [round((x - 0.7)/sum_max, 5) for x in sc_max_r]
+        print(c_min_r_s)
+        print('--')
+        print(c_max_r_s)
+        print('--')
+
+        wspd1 = w.create_sheet("Sign", 2)
+        wspd1['A1'] = 's1_min'
+        wspd1['B1'] = 's2_min'
+        wspd1['C1'] = 's3_min'
+        wspd1['D1'] = 's4_min'
+        wspd1['E1'] = 's5_min'
+        wspd1['F1'] = 's6_min'
+        wspd1.append(sc_min_r)
+        wspd1.append(['s1_max', 's2_max', 's3_max', 's4_max', 's5_max', 'd6_max'])
+        wspd1.append(sc_max_r)
+        wspd1.append(['', '', '', '', '', ''])
+        wspd1.append(['sum_min', '', '', '', '', ''])
+        wspd1.append([str(sum_min), '', '', '', '', ''])
+        wspd1.append(['a_min_factors', '', '', '', '', ''])
+        wspd1.append([str(c_min_r_s), '', '', '', '', ''])
+        #
+        wspd1.append(['', '', '', '', '', ''])
+        wspd1.append(['sum_max', '', '', '', '', ''])
+        wspd1.append([str(sum_max), '', '', '', '', ''])
+        wspd1.append(['a_max_factors', '', '', '', '', ''])
+        wspd1.append([str(c_max_r_s), '', '', '', '', ''])
+
+        dfp = pd.DataFrame()
+        for i in range(1, 6):
+            smm = 'x'+str(i)+'_min'
+            sxx = 'x'+str(i)+'_max'
+            if i == 1:
+                dfp['min_min']=df[smm]*c_min_r_s[i-1]
+                dfp['min_max']=df[smm]*c_max_r_s[i-1]
+                dfp['max_min']=df[sxx]*c_min_r_s[i-1]
+                dfp['max_max']=df[sxx]*c_max_r_s[i-1]
+            else:
+                dfp['min_min']=dfp['min_min']+df[smm]*c_min_r_s[i-1]
+                dfp['min_max']=dfp['min_max']+df[smm]*c_max_r_s[i-1]
+                dfp['max_min']=dfp['max_min']+df[sxx]*c_min_r_s[i-1]
+                dfp['max_max']=dfp['max_min']+df[sxx]*c_max_r_s[i-1]
+        dfp['max_value'] = dfp.max(axis=1)
+        dfp['min_value'] = dfp.min(axis=1)
+
+        wspd2 = w.create_sheet("Potential", 3)
+        for r in dataframe_to_rows(dfp, index=False, header=True):
+            wspd2.append(r)
+
+        w.save(sr)
+
+def main():
+    ll = ['AMOS']
+    pd_ = ProcessData(ll)
+    pd_.main()
+    #pd_.k_years(3, ll)
+
+
+if __name__ == '__main__':
+    main()
+
