@@ -32,6 +32,7 @@ class ProcessData:
         w = load_workbook(filename=sr, read_only=False)
         df = pd.read_excel(sr)
 
+        # Get the min distance from min and max
         df['d1_mm'] = abs(df['x0_min'] - df['x1_min'])
         df['d2_mm'] = abs(df['x0_min'] - df['x2_min'])
         df['d3_mm'] = abs(df['x0_min'] - df['x3_min'])
@@ -59,12 +60,13 @@ class ProcessData:
         df['d4_xm'] = abs(df['x0_max'] - df['x4_min'])
         df['d5_xm'] = abs(df['x0_max'] - df['x5_min'])
         df['d6_xm'] = abs(df['x0_max'] - df['x6_min'])
-
+        # min of every group
         df['SComb_mm'] = df.iloc[:, 15:21].min(axis=1)
         df['SComb_xx'] = df.iloc[:, 21:27].min(axis=1)
         df['SComb_mx'] = df.iloc[:, 27:33].min(axis=1)
         df['SComb_xm'] = df.iloc[:, 33:39].min(axis=1)
-
+        # ---------------------------------------------
+        # how close every variable to the min of all variables?
         df['s1_mm'] = df['d1_mm'] - df['SComb_mm']
         df['s2_mm'] = df['d2_mm'] - df['SComb_mm']
         df['s3_mm'] = df['d3_mm'] - df['SComb_mm']
@@ -97,7 +99,7 @@ class ProcessData:
         for r in dataframe_to_rows(df, index=False, header=True):
             wspd.append(r)
 
-        sig_mm = [1 - df['d1_mm'].mean(),
+        sim_mm = [1 - df['d1_mm'].mean(),
                   1 - df['d2_mm'].mean(),
                   1 - df['d3_mm'].mean(),
                   1 - df['d4_mm'].mean(),
@@ -105,7 +107,7 @@ class ProcessData:
                   1 - df['d6_mm'].mean(),
                   1 - df['SComb_mm'].mean()]
 
-        sig_xx = [1 - df['d1_xx'].mean(),
+        sim_xx = [1 - df['d1_xx'].mean(),
                   1 - df['d2_xx'].mean(),
                   1 - df['d3_xx'].mean(),
                   1 - df['d4_xx'].mean(),
@@ -113,7 +115,7 @@ class ProcessData:
                   1 - df['d6_xx'].mean(),
                   1 - df['SComb_xx'].mean()]
 
-        sig_mx = [1 - df['d1_mx'].mean(),
+        sim_mx = [1 - df['d1_mx'].mean(),
                   1 - df['d2_mx'].mean(),
                   1 - df['d3_mx'].mean(),
                   1 - df['d4_mx'].mean(),
@@ -121,13 +123,19 @@ class ProcessData:
                   1 - df['d6_mx'].mean(),
                   1 - df['SComb_mx'].mean()]
 
-        sig_xm = [1 - df['d1_xm'].mean(),
+        sim_xm = [1 - df['d1_xm'].mean(),
                   1 - df['d2_xm'].mean(),
                   1 - df['d3_xm'].mean(),
                   1 - df['d4_xm'].mean(),
                   1 - df['d5_xm'].mean(),
                   1 - df['d6_xm'].mean(),
                   1 - df['SComb_xm'].mean()]
+
+        sim_mm_r = [round(x, 5) for x in sim_mm]
+        sim_xx_r = [round(x, 5) for x in sim_xx]
+        sim_mx_r = [round(x, 5) for x in sim_mx]
+        sim_xm_r = [round(x, 5) for x in sim_xm]
+        # --------------------------------------
 
         sc_mm = [1-df['s1_mm'].mean(),
                  1-df['s2_mm'].mean(),
@@ -165,8 +173,8 @@ class ProcessData:
         sc_xx_r = [round(x, 5) for x in sc_xx]
         sc_mx_r = [round(x, 5) for x in sc_mx]
         sc_xm_r = [round(x, 5) for x in sc_xm]
+        # ------------------------------------
 
-        print('--')
         c_mm_r_sum = sum(sc_mm_r) - 0.7*len(sc_mm_r)
         sum_mm = round(c_mm_r_sum,5)
         c_mm_r_s = [round((x - 0.7)/sum_mm, 5) for x in sc_mm_r]
@@ -183,28 +191,36 @@ class ProcessData:
         sum_xm = round(c_xm_r_sum, 5)
         c_xm_r_s = [round((x - 0.7) / sum_xm, 5) for x in sc_xm_r]
 
-        print(c_mm_r_s)
-        print('--')
-        print(c_xx_r_s)
-        print('--')
-        print(c_mx_r_s)
-        print('--')
-        print(c_xm_r_s)
-        print('--')
-
+        # ---------------------------------------
         wspd1 = w.create_sheet("Significance", 2)
-        wspd1['A1'] = 's1_mm'
-        wspd1['B1'] = 's2_mm'
-        wspd1['C1'] = 's3_mm'
-        wspd1['D1'] = 's4_mm'
-        wspd1['E1'] = 's5_mm'
-        wspd1['F1'] = 's6_mm'
+        wspd1['A1'] = 'sim1_mm'
+        wspd1['B1'] = 'sim2_mm'
+        wspd1['C1'] = 'sim3_mm'
+        wspd1['D1'] = 'sim4_mm'
+        wspd1['E1'] = 'sim5_mm'
+        wspd1['F1'] = 'sim6_mm'
         wspd1.append(sc_mm_r)
+
+        wspd1.append(['sim1_xx', 'sim2_xx', 'sim3_xx', 'sim4_xx', 'sim5_xx', 'sim6_xx'])
+        wspd1.append(sim_xx_r)
+
+        wspd1.append(['sim1_mx', 'sim2_xx', 'sim3_xx', 'sim4_xx', 'sim5_xx', 'sim6_xx'])
+        wspd1.append(sim_mx_r)
+
+        wspd1.append(['sim1_xm', 'sim2_xm', 'sim3_xm', 'sim4_xm', 'sim5_xm', 'sim6_xm'])
+        wspd1.append(sim_xm_r)
+        wspd1.append(['', '', '', '', '', ''])
+
+        # --
+        wspd1.append(['s1_mm', 's2_mm', 's3_mm', 's4_mm', 's5_mm', 's6_mm'])
+        wspd1.append(sim_mm_r)
+
         wspd1.append(['s1_xx', 's2_xx', 's3_xx', 's4_xx', 's5_xx', 's6_xx'])
         wspd1.append(sc_xx_r)
 
         wspd1.append(['s1_mx', 's2_xx', 's3_xx', 's4_xx', 's5_xx', 's6_xx'])
         wspd1.append(sc_mx_r)
+
         wspd1.append(['s1_xm', 's2_xm', 's3_xm', 's4_xm', 's5_xm', 's6_xm'])
         wspd1.append(sc_xm_r)
 
@@ -237,15 +253,15 @@ class ProcessData:
             smm = 'x'+str(i)+'_min'
             sxx = 'x'+str(i)+'_max'
             if i == 1:
-                dfp['min_min'] = df[smm]*c_mm_r_s[i-1]
-                dfp['min_max'] = df[smm]*c_xx_r_s[i-1]
-                dfp['max_min'] = df[sxx]*c_mm_r_s[i-1]
-                dfp['max_max'] = df[sxx]*c_xx_r_s[i-1]
+                dfp['min_min'] = c_mm_r_s[i-1]*df[smm]
+                dfp['min_max'] = c_mx_r_s[i-1]*df[sxx]
+                dfp['max_min'] = c_xm_r_s[i-1]*df[smm]
+                dfp['max_max'] = c_xx_r_s[i-1]*df[sxx]
             else:
-                dfp['min_min']=dfp['min_min']+df[smm]*c_mm_r_s[i-1]
-                dfp['min_max']=dfp['min_max']+df[smm]*c_xx_r_s[i-1]
-                dfp['max_min']=dfp['max_min']+df[sxx]*c_mm_r_s[i-1]
-                dfp['max_max']=dfp['max_max']+df[sxx]*c_xx_r_s[i-1]
+                dfp['min_min']=dfp['min_min']+c_mm_r_s[i-1]*df[smm]
+                dfp['min_max']=dfp['min_max']+c_mx_r_s[i-1]*df[sxx]
+                dfp['max_min']=dfp['max_min']+c_xm_r_s[i-1]*df[smm]
+                dfp['max_max']=dfp['max_max']+c_xx_r_s[i-1]*df[sxx]
 
         dfp['max_value'] = dfp.max(axis=1)
         dfp['min_value'] = dfp.min(axis=1)
@@ -255,6 +271,7 @@ class ProcessData:
             wspd2.append(r)
 
         w.save(sr)
+
 
 def main():
     ll = ['AMOS']
