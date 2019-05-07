@@ -179,6 +179,8 @@ class ProcessData:
         sum_mm = round(c_mm_r_sum,5)
         c_mm_r_s = [round((x - 0.7)/sum_mm, 5) for x in sc_mm_r]
 
+        print(c_mm_r_s)
+
         c_xx_r_sum = sum(sc_xx_r) - 0.7*len(sc_xx_r)
         sum_xx = round(c_xx_r_sum,5)
         c_xx_r_s = [round((x - 0.7)/sum_xx, 5) for x in sc_xx_r]
@@ -199,21 +201,22 @@ class ProcessData:
         wspd1['D1'] = 'sim4_mm'
         wspd1['E1'] = 'sim5_mm'
         wspd1['F1'] = 'sim6_mm'
-        wspd1.append(sc_mm_r)
+        wspd1['G1'] = 'SCom_mm'
+        wspd1.append(sim_mm_r)
 
-        wspd1.append(['sim1_xx', 'sim2_xx', 'sim3_xx', 'sim4_xx', 'sim5_xx', 'sim6_xx'])
+        wspd1.append(['sim1_xx', 'sim2_xx', 'sim3_xx', 'sim4_xx', 'sim5_xx', 'sim6_xx', 'SCom_xx'])
         wspd1.append(sim_xx_r)
 
-        wspd1.append(['sim1_mx', 'sim2_xx', 'sim3_xx', 'sim4_xx', 'sim5_xx', 'sim6_xx'])
+        wspd1.append(['sim1_mx', 'sim2_xx', 'sim3_xx', 'sim4_xx', 'sim5_xx', 'sim6_xx''SCom_mx'])
         wspd1.append(sim_mx_r)
 
-        wspd1.append(['sim1_xm', 'sim2_xm', 'sim3_xm', 'sim4_xm', 'sim5_xm', 'sim6_xm'])
+        wspd1.append(['sim1_xm', 'sim2_xm', 'sim3_xm', 'sim4_xm', 'sim5_xm', 'sim6_xm''SCom_xm'])
         wspd1.append(sim_xm_r)
         wspd1.append(['', '', '', '', '', ''])
 
         # --
         wspd1.append(['s1_mm', 's2_mm', 's3_mm', 's4_mm', 's5_mm', 's6_mm'])
-        wspd1.append(sim_mm_r)
+        wspd1.append(sc_mm_r)
 
         wspd1.append(['s1_xx', 's2_xx', 's3_xx', 's4_xx', 's5_xx', 's6_xx'])
         wspd1.append(sc_xx_r)
@@ -227,8 +230,15 @@ class ProcessData:
         wspd1.append(['', '', '', '', '', ''])
         wspd1.append(['sum_mm', '', '', '', '', ''])
         wspd1.append([str(sum_mm), '', '', '', '', ''])
+
         wspd1.append(['a_mm_factors', '', '', '', '', ''])
         wspd1.append([str(c_mm_r_s), '', '', '', '', ''])
+
+        print(sum_mm)
+        print(c_mm_r_s)
+        print('-----------')
+        print(c_mm_r_s[0])
+        print(c_mm_r_s[5])
         #
         wspd1.append(['', '', '', '', '', ''])
         wspd1.append(['sum_xx', '', '', '', '', ''])
@@ -249,7 +259,7 @@ class ProcessData:
         wspd1.append([str(c_xm_r_s), '', '', '', '', ''])
 
         dfp = pd.DataFrame()
-        for i in range(1, 6):
+        for i in range(1, 7):
             smm = 'x'+str(i)+'_min'
             sxx = 'x'+str(i)+'_max'
             if i == 1:
