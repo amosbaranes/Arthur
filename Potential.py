@@ -284,7 +284,7 @@ class ProcessData:
 
 
 def main():
-    ll = ['AMOS']
+    ll = ['1960-ALL RANGES', '1970-ALL RANGES', '1978-ALL RANGES', '1985-ALL RANGES']
     pd_ = ProcessData(ll)
     pd_.main()
     #pd_.k_years(3, ll)
